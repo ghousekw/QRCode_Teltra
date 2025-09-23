@@ -14,9 +14,12 @@ export async function POST(
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
-    // Check if catalogue exists
+    // Check if catalogue exists and get current product count for ordering
     const catalogue = await db.catalogue.findUnique({
-      where: { id: catalogueId }
+      where: { id: catalogueId },
+      include: {
+        products: true
+      }
     })
 
     if (!catalogue) {
@@ -30,6 +33,7 @@ export async function POST(
         description: description || null,
         fileUrl: fileUrl || null,
         image: image || null,
+        order: catalogue.products.length, // Set order to be last
         catalogueId
       }
     })

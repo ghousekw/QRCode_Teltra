@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { safeFetchJson } from "@/lib/utils"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Download, Image as ImageIcon, FileText } from "lucide-react"
+import { ArrowLeft, Download, Image as ImageIcon, FileText, GripVertical } from "lucide-react"
 import { toast } from "sonner"
 
 interface Product {
@@ -27,11 +27,14 @@ interface Catalogue {
 export default function CataloguePage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [catalogue, setCatalogue] = useState<Catalogue | null>(null)
   const [loading, setLoading] = useState(true)
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState("")
   const [previewImageAlt, setPreviewImageAlt] = useState("")
+  const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null)
+  const [draggedProductId, setDraggedProductId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchCatalogue = async () => {
@@ -52,6 +55,31 @@ export default function CataloguePage() {
     }
   }, [params.id, router])
 
+  // Handle product parameter for individual product QR codes
+  useEffect(() => {
+    const productId = searchParams.get('product')
+    if (productId && catalogue) {
+      setHighlightedProductId(productId)
+      
+      // Scroll to the specific product after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        const productElement = document.getElementById(`product-${productId}`)
+        if (productElement) {
+          productElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          })
+          
+          // Add a temporary highlight effect
+          productElement.classList.add('ring-4', 'ring-blue-500', 'ring-opacity-50')
+          setTimeout(() => {
+            productElement.classList.remove('ring-4', 'ring-blue-500', 'ring-opacity-50')
+          }, 3000)
+        }
+      }, 500)
+    }
+  }, [searchParams, catalogue])
+
   const handleDownload = (product: Product) => {
     if (product.fileUrl) {
       window.open(product.fileUrl, '_blank')
@@ -64,6 +92,61 @@ export default function CataloguePage() {
     setPreviewImageUrl(imageUrl)
     setPreviewImageAlt(imageAlt)
     setIsImagePreviewOpen(true)
+  }
+
+  const handleDragStart = (e: React.DragEvent, productId: string) => {
+    setDraggedProductId(productId)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', productId)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetProductId: string) => {
+    e.preventDefault()
+    
+    if (!draggedProductId || draggedProductId === targetProductId || !catalogue) {
+      setDraggedProductId(null)
+      return
+    }
+
+    const products = [...catalogue.products]
+    const draggedIndex = products.findIndex(p => p.id === draggedProductId)
+    const targetIndex = products.findIndex(p => p.id === targetProductId)
+    
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedProductId(null)
+      return
+    }
+
+    // Remove dragged product and insert at new position
+    const [draggedProduct] = products.splice(draggedIndex, 1)
+    products.splice(targetIndex, 0, draggedProduct)
+
+    // Update local state immediately for better UX
+    setCatalogue({ ...catalogue, products })
+
+    // Update order in database
+    try {
+      const productIds = products.map(p => p.id)
+      await safeFetchJson(`/api/catalogues/${catalogue.id}/products/reorder`, {
+        method: 'PUT',
+        body: JSON.stringify({ productIds })
+      })
+      toast.success("Product order updated!")
+    } catch (error) {
+      console.error('Error updating product order:', error)
+      toast.error("Failed to save product order")
+    }
+    
+    setDraggedProductId(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedProductId(null)
   }
 
   if (loading) {
@@ -111,6 +194,14 @@ export default function CataloguePage() {
             <Badge variant="secondary" className="mt-2">
               {catalogue.products.length} products
             </Badge>
+            
+            {highlightedProductId && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 text-sm">
+                  📱 You're viewing a specific product from a QR code. The product is highlighted below.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -121,24 +212,44 @@ export default function CataloguePage() {
             <p className="text-gray-600">This catalogue doesn't have any products yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {catalogue.products.map((product) => (
-              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{product.name}</CardTitle>
-                  {product.description && (
-                    <CardDescription className="text-sm">
-                      {product.description}
-                    </CardDescription>
-                  )}
+              <Card 
+                key={product.id} 
+                id={`product-${product.id}`}
+                className={`overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col ${
+                  highlightedProductId === product.id 
+                    ? 'ring-2 ring-blue-500 shadow-lg scale-105' 
+                    : ''
+                } ${
+                  draggedProductId === product.id ? 'opacity-50 scale-95' : ''
+                }`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, product.id)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, product.id)}
+                onDragEnd={handleDragEnd}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start gap-2">
+                    <GripVertical className="h-4 w-4 text-gray-400 cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
+                      {product.description && (
+                        <CardDescription className="text-sm line-clamp-3">
+                          {product.description}
+                        </CardDescription>
+                      )}
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 flex-1 flex flex-col">
                   {product.image && (
-                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                    <div className="aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center">
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className="max-w-full max-h-full object-contain"
                         onClick={() => handleImagePreview(product.image!, product.name)}
                         onError={(e) => {
                           e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNzUgMTI1SDIyNVYxNzVIMTc1VjEyNVoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTE5NSAxNDVIMjA1VjE1NUgxOTVWMTQ1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'
@@ -148,23 +259,25 @@ export default function CataloguePage() {
                     </div>
                   )}
                   
-                  {product.fileUrl && (
-                    <Button 
-                      onClick={() => handleDownload(product)}
-                      className="w-full"
-                      size="sm"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Product
-                    </Button>
-                  )}
-                  
-                  {!product.fileUrl && (
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">No download available</p>
-                    </div>
-                  )}
+                  <div className="mt-auto">
+                    {product.fileUrl && (
+                      <Button 
+                        onClick={() => handleDownload(product)}
+                        className="w-full"
+                        size="sm"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Product
+                      </Button>
+                    )}
+                    
+                    {!product.fileUrl && (
+                      <div className="text-center p-4 bg-gray-50 rounded-lg">
+                        <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">No download available</p>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

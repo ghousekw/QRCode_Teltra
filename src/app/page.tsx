@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Download, QrCode, Package, Image as ImageIcon, Edit, Trash2, Share2, Copy, Eye } from "lucide-react"
+import { Plus, Download, QrCode, Package, Image as ImageIcon, Edit, Trash2, Share2, Copy, Eye, GripVertical } from "lucide-react"
 import { toast } from "sonner"
 
 interface Product {
@@ -46,6 +46,7 @@ export default function Home() {
   const [previewProductUrl, setPreviewProductUrl] = useState("")
   const [selectedCatalogue, setSelectedCatalogue] = useState<Catalogue | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [draggedProductId, setDraggedProductId] = useState<string | null>(null)
   const [newCatalogue, setNewCatalogue] = useState({
     title: "",
     description: ""
@@ -380,6 +381,75 @@ export default function Home() {
         toast.error("Unable to share. URL copied to clipboard instead.")
       }
     }
+  }
+
+  const handleDragStart = (e: React.DragEvent, productId: string) => {
+    setDraggedProductId(productId)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', productId)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetProductId: string) => {
+    e.preventDefault()
+    
+    if (!draggedProductId || draggedProductId === targetProductId) {
+      setDraggedProductId(null)
+      return
+    }
+
+    const catalogue = catalogues.find(cat => 
+      cat.products.some(p => p.id === draggedProductId)
+    )
+    
+    if (!catalogue) {
+      setDraggedProductId(null)
+      return
+    }
+
+    const products = [...catalogue.products]
+    const draggedIndex = products.findIndex(p => p.id === draggedProductId)
+    const targetIndex = products.findIndex(p => p.id === targetProductId)
+    
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedProductId(null)
+      return
+    }
+
+    // Remove dragged product and insert at new position
+    const [draggedProduct] = products.splice(draggedIndex, 1)
+    products.splice(targetIndex, 0, draggedProduct)
+
+    // Update local state immediately for better UX
+    const updatedCatalogues = catalogues.map(cat => 
+      cat.id === catalogue.id 
+        ? { ...cat, products }
+        : cat
+    )
+    setCatalogues(updatedCatalogues)
+
+    // Update order in database
+    try {
+      const productIds = products.map(p => p.id)
+      await safeFetchJson(`/api/catalogues/${catalogue.id}/products/reorder`, {
+        method: 'PUT',
+        body: JSON.stringify({ productIds })
+      })
+      toast.success("Product order updated!")
+    } catch (error) {
+      console.error('Error updating product order:', error)
+      toast.error("Failed to save product order")
+    }
+    
+    setDraggedProductId(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedProductId(null)
   }
 
   const handleShareQRCode = async (catalogue: Catalogue) => {
@@ -869,15 +939,26 @@ export default function Home() {
                   {catalogue.products.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">Products:</h4>
-                      <div className="max-h-32 overflow-y-auto space-y-1">
+                      <div className="max-h-40 overflow-y-auto space-y-2">
                         {catalogue.products.map((product) => (
-                          <div key={product.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm group">
+                          <div 
+                            key={product.id} 
+                            className={`flex items-center justify-between p-4 bg-gray-50 rounded text-sm group min-h-[60px] transition-all duration-200 ${
+                              draggedProductId === product.id ? 'opacity-50 scale-95' : 'hover:bg-gray-100'
+                            }`}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, product.id)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, product.id)}
+                            onDragEnd={handleDragEnd}
+                          >
                             <div className="flex items-center gap-2 flex-1">
+                              <GripVertical className="h-4 w-4 text-gray-400 cursor-grab active:cursor-grabbing" />
                               {product.image && (
                                 <img 
                                   src={product.image} 
                                   alt={product.name}
-                                  className="w-8 h-8 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                  className="w-10 h-10 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity"
                                   onClick={() => handleImagePreview(product.image!, product.name)}
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none'
@@ -886,33 +967,33 @@ export default function Home() {
                               )}
                               <span className="font-medium">{product.name}</span>
                             </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleGenerateProductQRCode(catalogue.id, product.id, product.name)}
-                                className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
+                                className="h-7 w-7 sm:h-6 sm:w-6 p-0 text-blue-500 hover:text-blue-700"
                                 title="Generate QR Code"
                               >
-                                <QrCode className="h-3 w-3" />
+                                <QrCode className="h-4 w-4 sm:h-3 sm:w-3" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleEditProduct(catalogue, product)}
-                                className="h-6 w-6 p-0"
+                                className="h-7 w-7 sm:h-6 sm:w-6 p-0"
                                 title="Edit Product"
                               >
-                                <Edit className="h-3 w-3" />
+                                <Edit className="h-4 w-4 sm:h-3 sm:w-3" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteProduct(catalogue.id, product.id)}
-                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                className="h-7 w-7 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-700"
                                 title="Delete Product"
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" />
                               </Button>
                             </div>
                           </div>
@@ -1150,33 +1231,36 @@ export default function Home() {
                     className="w-64 h-64 border rounded-lg"
                   />
                 </div>
-                <div className="space-y-3">
-                  <div className="flex gap-3 justify-center">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-3 justify-center">
                     <Button
-                      variant="outline"
+                      variant="default"
                       onClick={() => handleDownloadProductQRCode(previewProductQRUrl, previewProductQRTitle)}
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download QR
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="default"
                       onClick={() => handleCopyProductUrl(previewProductUrl)}
+                      className="bg-green-600 hover:bg-green-700"
                     >
                       <Copy className="h-4 w-4 mr-2" />
                       Copy URL
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="default"
                       onClick={() => handleShareProduct(previewProductUrl, previewProductQRTitle.replace(' - QR Code', ''))}
+                      className="bg-purple-600 hover:bg-purple-700"
                     >
                       <Share2 className="h-4 w-4 mr-2" />
                       Share
                     </Button>
                   </div>
-                  <div className="flex gap-3 justify-center">
+                  <div className="flex justify-center">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={async () => {
                         try {

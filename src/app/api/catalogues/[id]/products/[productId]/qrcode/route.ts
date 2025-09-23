@@ -24,8 +24,8 @@ export async function POST(
       return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
-    // Create the product URL
-    const productUrl = `${request.nextUrl.origin}/catalogue/${catalogueId}?product=${productId}`
+    // Create the product URL - now points to dedicated product page
+    const productUrl = `${request.nextUrl.origin}/catalogue/${catalogueId}/product/${productId}`
     
     // Generate QR code
     const qrCodeDataURL = await QRCode.toDataURL(productUrl, {

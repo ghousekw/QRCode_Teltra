@@ -6,7 +6,11 @@ export async function GET() {
   try {
     const catalogues = await db.catalogue.findMany({
       include: {
-        products: true
+        products: {
+          orderBy: {
+            order: "asc"
+          }
+        }
       },
       orderBy: {
         createdAt: "desc"
