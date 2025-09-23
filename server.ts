@@ -33,11 +33,7 @@ async function createCustomServer() {
 
     // Setup Socket.IO
     const io = new Server(server, {
-      path: '/api/socketio',
-      cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-      }
+      path: '/api/socketio'
     });
 
     setupSocket(io);
