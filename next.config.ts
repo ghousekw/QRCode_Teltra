@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
-  output: 'standalone',
   webpack: (config, { dev }) => {
     if (dev) {
       // 禁用 webpack 的热模块替换
