@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Download, QrCode, Package, Image as ImageIcon, Edit, Trash2 } from "lucide-react"
+import { Plus, Download, QrCode, Package, Image as ImageIcon, Edit, Trash2, Share2, Copy, Eye } from "lucide-react"
 import { toast } from "sonner"
 
 interface Product {
@@ -37,6 +37,9 @@ export default function Home() {
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState("")
   const [previewImageAlt, setPreviewImageAlt] = useState("")
+  const [isQRPreviewOpen, setIsQRPreviewOpen] = useState(false)
+  const [previewQRUrl, setPreviewQRUrl] = useState("")
+  const [previewQRTitle, setPreviewQRTitle] = useState("")
   const [selectedCatalogue, setSelectedCatalogue] = useState<Catalogue | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [newCatalogue, setNewCatalogue] = useState({
@@ -210,6 +213,139 @@ export default function Home() {
     } catch (error) {
       toast.error("Error generating QR code")
     }
+  }
+
+  const handleDownloadQRCode = (qrCodeUrl: string, catalogueTitle: string) => {
+    try {
+      const link = document.createElement('a')
+      link.href = qrCodeUrl
+      link.download = `${catalogueTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_qrcode.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success("QR code downloaded successfully!")
+    } catch (error) {
+      toast.error("Error downloading QR code")
+    }
+  }
+
+  const handleCopyQRUrl = async (catalogueId: string) => {
+    try {
+      const catalogueUrl = `${window.location.origin}/catalogue/${catalogueId}`
+      
+      console.log('Copy attempt:', {
+        hasClipboard: !!navigator.clipboard,
+        isSecureContext: window.isSecureContext,
+        protocol: window.location.protocol,
+        url: catalogueUrl
+      })
+      
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(catalogueUrl)
+        toast.success("Catalogue URL copied to clipboard!")
+      } else {
+        // Fallback for older browsers or non-HTTPS
+        const textArea = document.createElement('textarea')
+        textArea.value = catalogueUrl
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        
+        try {
+          const success = document.execCommand('copy')
+          if (success) {
+            toast.success("Catalogue URL copied to clipboard!")
+          } else {
+            throw new Error('execCommand failed')
+          }
+        } catch (err) {
+          console.error('Fallback copy failed:', err)
+          toast.error("Unable to copy URL. Please copy manually: " + catalogueUrl)
+        } finally {
+          document.body.removeChild(textArea)
+        }
+      }
+    } catch (error) {
+      console.error('Copy error:', error)
+      toast.error("Error copying URL to clipboard")
+    }
+  }
+
+  const handleShareQRCode = async (catalogue: Catalogue) => {
+    const catalogueUrl = `${window.location.origin}/catalogue/${catalogue.id}`
+    
+    console.log('Share attempt:', {
+      hasShare: !!navigator.share,
+      hasCanShare: !!navigator.canShare,
+      isSecureContext: window.isSecureContext,
+      protocol: window.location.protocol,
+      url: catalogueUrl
+    })
+    
+    // Check if Web Share API is available and can share the data
+    if (navigator.share && navigator.canShare && navigator.canShare({
+      title: `Check out ${catalogue.title}`,
+      text: catalogue.description,
+      url: catalogueUrl
+    })) {
+      try {
+        await navigator.share({
+          title: `Check out ${catalogue.title}`,
+          text: catalogue.description,
+          url: catalogueUrl
+        })
+        toast.success("Catalogue shared successfully!")
+        return
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Share error:', error)
+          // Fall through to clipboard fallback
+        } else {
+          // User cancelled sharing, don't show error
+          return
+        }
+      }
+    }
+    
+    // Fallback: copy URL to clipboard
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(catalogueUrl)
+        toast.success("Catalogue URL copied to clipboard!")
+      } else {
+        // Fallback for older browsers or non-HTTPS
+        const textArea = document.createElement('textarea')
+        textArea.value = catalogueUrl
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        
+        try {
+          document.execCommand('copy')
+          toast.success("Catalogue URL copied to clipboard!")
+        } catch (err) {
+          toast.error("Unable to copy URL. Please copy manually: " + catalogueUrl)
+        } finally {
+          document.body.removeChild(textArea)
+        }
+      }
+    } catch (error) {
+      console.error('Copy fallback error:', error)
+      toast.error("Error copying URL to clipboard")
+    }
+  }
+
+  const handlePreviewQRCode = (qrCodeUrl: string, catalogueTitle: string) => {
+    setPreviewQRUrl(qrCodeUrl)
+    setPreviewQRTitle(catalogueTitle)
+    setIsQRPreviewOpen(true)
   }
 
   const handleEditCatalogue = (catalogue: Catalogue) => {
@@ -465,11 +601,17 @@ export default function Home() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-center">
                     {catalogue.qrCodeUrl ? (
-                      <img 
-                        src={catalogue.qrCodeUrl} 
-                        alt="QR Code" 
-                        className="w-32 h-32 border rounded-lg"
-                      />
+                      <div className="relative group">
+                        <img 
+                          src={catalogue.qrCodeUrl} 
+                          alt="QR Code" 
+                          className="w-32 h-32 border rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => handlePreviewQRCode(catalogue.qrCodeUrl!, catalogue.title)}
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                          <Eye className="h-6 w-6 text-white" />
+                        </div>
+                      </div>
                     ) : (
                       <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
                         <QrCode className="h-8 w-8 text-gray-400" />
@@ -477,28 +619,64 @@ export default function Home() {
                     )}
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleGenerateQRCode(catalogue.id)}
-                      className="flex-1"
-                    >
-                      <QrCode className="h-4 w-4 mr-2" />
-                      {catalogue.qrCodeUrl ? "Regenerate QR" : "Generate QR"}
-                    </Button>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateQRCode(catalogue.id)}
+                        className="flex-1"
+                      >
+                        <QrCode className="h-4 w-4 mr-2" />
+                        {catalogue.qrCodeUrl ? "Regenerate QR" : "Generate QR"}
+                      </Button>
+                      
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => {
+                          setSelectedCatalogue(catalogue)
+                          setIsAddProductDialogOpen(true)
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Product
+                      </Button>
+                    </div>
                     
-                    <Button 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => {
-                        setSelectedCatalogue(catalogue)
-                        setIsAddProductDialogOpen(true)
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Product
-                    </Button>
+                    {catalogue.qrCodeUrl && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadQRCode(catalogue.qrCodeUrl!, catalogue.title)}
+                          className="flex-1"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleShareQRCode(catalogue)}
+                          className="flex-1"
+                        >
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Share
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopyQRUrl(catalogue.id)}
+                          className="flex-1"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy URL
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   {isAddProductDialogOpen && selectedCatalogue?.id === catalogue.id && (
@@ -745,6 +923,87 @@ export default function Home() {
               />
               <div className="p-4 bg-gray-50 border-t">
                 <p className="text-sm text-gray-600 text-center">{previewImageAlt}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Preview Modal */}
+      {isQRPreviewOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-2xl max-h-[90vh] w-full">
+            <button
+              onClick={() => setIsQRPreviewOpen(false)}
+              className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
+              <div className="p-6 text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{previewQRTitle} - QR Code</h3>
+                <div className="flex justify-center mb-6">
+                  <img
+                    src={previewQRUrl}
+                    alt="QR Code"
+                    className="w-64 h-64 border rounded-lg"
+                  />
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const link = document.createElement('a')
+                      link.href = previewQRUrl
+                      link.download = `${previewQRTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_qrcode.png`
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                      toast.success("QR code downloaded successfully!")
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        if (navigator.clipboard && window.isSecureContext) {
+                          await navigator.clipboard.writeText(previewQRUrl)
+                          toast.success("QR code URL copied to clipboard!")
+                        } else {
+                          // Fallback for older browsers or non-HTTPS
+                          const textArea = document.createElement('textarea')
+                          textArea.value = previewQRUrl
+                          textArea.style.position = 'fixed'
+                          textArea.style.left = '-999999px'
+                          textArea.style.top = '-999999px'
+                          document.body.appendChild(textArea)
+                          textArea.focus()
+                          textArea.select()
+                          
+                          try {
+                            document.execCommand('copy')
+                            toast.success("QR code URL copied to clipboard!")
+                          } catch (err) {
+                            toast.error("Unable to copy URL. Please copy manually: " + previewQRUrl)
+                          } finally {
+                            document.body.removeChild(textArea)
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Copy error:', error)
+                        toast.error("Error copying QR code URL")
+                      }
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Image URL
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
