@@ -122,7 +122,11 @@ export default function VCardPage() {
       vcard.title && `Title: ${vcard.title}`,
       vcard.company && `Company: ${vcard.company}`,
       vcard.email && `Email: ${vcard.email}`,
-      vcard.phone && `Phone: ${vcard.phone}`,
+      // Include all phone numbers from phoneNumbers array
+      ...(vcard.phoneNumbers && vcard.phoneNumbers.length > 0 
+        ? vcard.phoneNumbers.map(phone => `Phone (${phone.type || 'phone'}): ${phone.number}`)
+        : vcard.phone ? [`Phone: ${vcard.phone}`] : []
+      ),
       vcard.website && `Website: ${vcard.website}`,
       vcard.address && `Address: ${vcard.address}`,
       vcard.city && vcard.state && `City: ${vcard.city}, ${vcard.state}`,
@@ -157,7 +161,14 @@ export default function VCardPage() {
       vcardString += `EMAIL:${vcard.email}\n`
     }
     
-    if (vcard.phone) {
+    // Include all phone numbers from phoneNumbers array
+    if (vcard.phoneNumbers && vcard.phoneNumbers.length > 0) {
+      vcard.phoneNumbers.forEach(phone => {
+        const phoneType = phone.type ? `TYPE=${phone.type.toUpperCase()}` : ''
+        vcardString += `TEL${phoneType ? ';' + phoneType : ''}:${phone.number}\n`
+      })
+    } else if (vcard.phone) {
+      // Fallback to single phone field if phoneNumbers array is not available
       vcardString += `TEL:${vcard.phone}\n`
     }
     
@@ -519,13 +530,13 @@ export default function VCardPage() {
               )}
               
               <div className="mt-4 pt-3 border-t border-gray-100">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="flex gap-2">
                   <Button 
                     onClick={handleDownloadVCard} 
-                    className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-medium py-2 px-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex-1"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    <span className="text-xs">Download</span>
+                    <span className="text-xs">Download Contact Info</span>
                   </Button>
                   <Button 
                     onClick={handleShare} 
