@@ -212,17 +212,17 @@ export default function VCardPage() {
           {/* Professional Contact Card */}
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
             {/* Modern Header with Company Info */}
-            <div className="relative bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 p-6">
+            <div className="relative bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
               
               <div className="relative z-10">
                 {vcard.logoUrl && (
-                  <div className="mb-4 flex justify-center">
+                  <div className="flex justify-center">
                     <img 
                       src={vcard.logoUrl} 
                       alt="Company Logo" 
-                      className="h-12 w-auto object-contain drop-shadow-lg"
+                      className="h-20 w-auto object-contain drop-shadow-lg"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none'
                       }}
