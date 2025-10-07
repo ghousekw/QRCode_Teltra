@@ -136,9 +136,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     console.log('vCard found:', vcard.firstName, vcard.lastName, 'Logo URL:', vcard.logoUrl)
 
     // Generate URL for QR code using the request's origin
-    const origin = request.headers.get('origin') || request.headers.get('host')
-    const protocol = request.headers.get('x-forwarded-proto') || 'https'
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (origin ? `${protocol}://${origin}` : 'http://localhost:3001')
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+    
+    if (!baseUrl) {
+      const origin = request.headers.get('origin') || request.headers.get('host')
+      const protocol = request.headers.get('x-forwarded-proto') || 'https'
+      baseUrl = origin ? `${protocol}://${origin}` : 'http://localhost:3001'
+    }
+    
+    // Ensure baseUrl doesn't have double protocol
+    if (baseUrl.startsWith('https://https://') || baseUrl.startsWith('http://http://')) {
+      baseUrl = baseUrl.replace(/^https?:\/\/https?:\/\//, 'https://')
+    }
+    
     const vcardUrl = `${baseUrl}/vcard/${id}`
     console.log('Generated vCard URL:', vcardUrl)
     

@@ -35,7 +35,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // First, delete existing phone numbers
-    await prisma.phoneNumber.deleteMany({
+      await prisma.phoneNumber.deleteMany({
       where: { vcardId: id }
     })
 
