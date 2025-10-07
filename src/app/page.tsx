@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Download, QrCode, Package, Image as ImageIcon, Edit, Trash2, Share2, Copy, Eye, GripVertical } from "lucide-react"
+import { Plus, Download, QrCode, Package, Image as ImageIcon, Edit, Trash2, Share2, Copy, Eye, GripVertical, User } from "lucide-react"
 import { toast } from "sonner"
+import Link from "next/link"
 
 interface Product {
   id: string
@@ -376,7 +377,7 @@ export default function Home() {
       await handleCopyProductUrl(productUrl)
     } catch (error) {
       console.error('Share error:', error)
-      if (error.name !== 'AbortError') {
+      if (error instanceof Error && error.name !== 'AbortError') {
         // If sharing was cancelled, don't show error
         toast.error("Unable to share. URL copied to clipboard instead.")
       }
@@ -591,11 +592,11 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Product Catalogue Manager</h1>
-          <p className="text-lg text-gray-600">Create digital catalogues with QR codes for easy sharing</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Digital Business Solutions</h1>
+          <p className="text-lg text-gray-600">Create digital catalogues and virtual business cards with QR codes</p>
         </div>
 
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center gap-4 mb-8">
           <Button 
             size="lg" 
             className="gap-2"
@@ -604,7 +605,18 @@ export default function Home() {
             <Plus className="h-5 w-5" />
             Create New Catalogue
           </Button>
+          <Link href="/vcard">
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="gap-2"
+            >
+              <User className="h-5 w-5" />
+              Digital Business Cards
+            </Button>
+          </Link>
         </div>
+
 
         {isCreateDialogOpen && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">

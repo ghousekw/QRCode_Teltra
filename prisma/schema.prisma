@@ -53,3 +53,47 @@ model Product {
   updatedAt   DateTime @updatedAt
   catalogue   Catalogue @relation(fields: [catalogueId], references: [id], onDelete: Cascade)
 }
+
+model VCard {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  arabicFirstName String?
+  arabicLastName  String?
+  title       String?
+  company     String?
+  email       String?
+  phone       String?
+  website     String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  zipCode     String?
+  notes       String?
+  qrCodeUrl   String?
+  logoUrl     String?
+  instagram   String?
+  facebook    String?
+  twitter     String?
+  linkedin    String?
+  youtube     String?
+  tiktok      String?
+  snapchat    String?
+  telegram    String?
+  whatsapp    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  phoneNumbers PhoneNumber[]
+}
+
+model PhoneNumber {
+  id        String   @id @default(cuid())
+  number    String
+  country   String?
+  type      String?  // office, mobile, fax, etc.
+  vcardId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  vcard     VCard    @relation(fields: [vcardId], references: [id], onDelete: Cascade)
+}
