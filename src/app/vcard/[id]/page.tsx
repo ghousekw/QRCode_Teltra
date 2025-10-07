@@ -399,194 +399,113 @@ export default function VCardPage() {
               {(vcard.instagram || vcard.facebook || vcard.twitter || vcard.linkedin || vcard.youtube || vcard.tiktok || vcard.snapchat || vcard.telegram || vcard.whatsapp) && (
                 <div className="mt-3 pt-3 border-t border-gray-200">
                   <h4 className="font-medium text-gray-900 mb-2 text-sm">Social Media</h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {vcard.instagram && (
-                      <div className="group p-2 rounded-lg bg-gray-50 hover:bg-pink-50 transition-all duration-200 border border-transparent hover:border-pink-200">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded flex items-center justify-center flex-shrink-0 group-hover:from-purple-600 group-hover:to-pink-600 transition-colors">
-                            <Instagram className="h-3 w-3 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.instagram.startsWith('http') ? vcard.instagram : `https://instagram.com/${vcard.instagram.replace('@', '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-pink-600 transition-colors text-sm block"
-                            >
-                              @{vcard.instagram.replace('@', '').replace('https://instagram.com/', '')}
-                            </a>
-                            <p className="text-xs text-gray-500">Instagram</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.instagram.startsWith('http') ? vcard.instagram : `https://instagram.com/${vcard.instagram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
+                        title="Instagram"
+                      >
+                        <Instagram className="h-4 w-4 text-white" />
+                      </a>
                     )}
                     
                     {vcard.facebook && (
-                      <div className="group p-3 rounded-xl bg-gray-50 hover:bg-blue-50 transition-all duration-200 border border-transparent hover:border-blue-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-blue-700 transition-colors">
-                            <Facebook className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.facebook.startsWith('http') ? vcard.facebook : `https://facebook.com/${vcard.facebook}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-blue-600 transition-colors text-sm block"
-                            >
-                              {vcard.facebook.replace('https://facebook.com/', '')}
-                            </a>
-                            <p className="text-xs text-gray-500">Facebook</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.facebook.startsWith('http') ? vcard.facebook : `https://facebook.com/${vcard.facebook}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-200"
+                        title="Facebook"
+                      >
+                        <Facebook className="h-4 w-4 text-white" />
+                      </a>
                     )}
                     
                     {vcard.twitter && (
-                      <div className="group p-3 rounded-xl bg-gray-50 hover:bg-sky-50 transition-all duration-200 border border-transparent hover:border-sky-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-sky-600 transition-colors">
-                            <Twitter className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.twitter.startsWith('http') ? vcard.twitter : `https://twitter.com/${vcard.twitter.replace('@', '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-sky-600 transition-colors text-sm block"
-                            >
-                              @{vcard.twitter.replace('@', '').replace('https://twitter.com/', '')}
-                            </a>
-                            <p className="text-xs text-gray-500">Twitter</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.twitter.startsWith('http') ? vcard.twitter : `https://twitter.com/${vcard.twitter.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-sky-500 hover:bg-sky-600 transition-all duration-200"
+                        title="Twitter"
+                      >
+                        <Twitter className="h-4 w-4 text-white" />
+                      </a>
                     )}
                     
                     {vcard.linkedin && (
-                      <div className="group p-3 rounded-xl bg-gray-50 hover:bg-blue-50 transition-all duration-200 border border-transparent hover:border-blue-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-blue-800 transition-colors">
-                            <Linkedin className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.linkedin.startsWith('http') ? vcard.linkedin : `https://linkedin.com/in/${vcard.linkedin}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-blue-700 transition-colors text-sm block"
-                            >
-                              {vcard.linkedin.replace('https://linkedin.com/in/', '')}
-                            </a>
-                            <p className="text-xs text-gray-500">LinkedIn</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.linkedin.startsWith('http') ? vcard.linkedin : `https://linkedin.com/in/${vcard.linkedin}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-700 hover:bg-blue-800 transition-all duration-200"
+                        title="LinkedIn"
+                      >
+                        <Linkedin className="h-4 w-4 text-white" />
+                      </a>
                     )}
                     
                     {vcard.youtube && (
-                      <div className="group p-3 rounded-xl bg-gray-50 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-700 transition-colors">
-                            <Youtube className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.youtube.startsWith('http') ? vcard.youtube : `https://youtube.com/@${vcard.youtube.replace('@', '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-red-600 transition-colors text-sm block"
-                            >
-                              @{vcard.youtube.replace('@', '').replace('https://youtube.com/@', '')}
-                            </a>
-                            <p className="text-xs text-gray-500">YouTube</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.youtube.startsWith('http') ? vcard.youtube : `https://youtube.com/@${vcard.youtube.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-600 hover:bg-red-700 transition-all duration-200"
+                        title="YouTube"
+                      >
+                        <Youtube className="h-4 w-4 text-white" />
+                      </a>
                     )}
                     
                     {vcard.tiktok && (
-                      <div className="group p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all duration-200 border border-transparent hover:border-gray-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-gray-800 transition-colors">
-                            <MessageSquare className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.tiktok.startsWith('http') ? vcard.tiktok : `https://tiktok.com/@${vcard.tiktok.replace('@', '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-gray-600 transition-colors text-sm block"
-                            >
-                              @{vcard.tiktok.replace('@', '').replace('https://tiktok.com/@', '')}
-                            </a>
-                            <p className="text-xs text-gray-500">TikTok</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.tiktok.startsWith('http') ? vcard.tiktok : `https://tiktok.com/@${vcard.tiktok.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-black hover:bg-gray-800 transition-all duration-200"
+                        title="TikTok"
+                      >
+                        <MessageSquare className="h-4 w-4 text-white" />
+                      </a>
                     )}
                     
                     {vcard.snapchat && (
-                      <div className="group p-3 rounded-xl bg-gray-50 hover:bg-yellow-50 transition-all duration-200 border border-transparent hover:border-yellow-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-yellow-600 transition-colors">
-                            <MessageSquare className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.snapchat.startsWith('http') ? vcard.snapchat : `https://snapchat.com/add/${vcard.snapchat}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-yellow-600 transition-colors text-sm block"
-                            >
-                              {vcard.snapchat}
-                            </a>
-                            <p className="text-xs text-gray-500">Snapchat</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.snapchat.startsWith('http') ? vcard.snapchat : `https://snapchat.com/add/${vcard.snapchat}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-yellow-500 hover:bg-yellow-600 transition-all duration-200"
+                        title="Snapchat"
+                      >
+                        <MessageSquare className="h-4 w-4 text-white" />
+                      </a>
                     )}
                     
                     {vcard.telegram && (
-                      <div className="group p-3 rounded-xl bg-gray-50 hover:bg-blue-50 transition-all duration-200 border border-transparent hover:border-blue-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 transition-colors">
-                            <Send className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.telegram.startsWith('http') ? vcard.telegram : `https://t.me/${vcard.telegram.replace('@', '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-blue-600 transition-colors text-sm block"
-                            >
-                              @{vcard.telegram.replace('@', '').replace('https://t.me/', '')}
-                            </a>
-                            <p className="text-xs text-gray-500">Telegram</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.telegram.startsWith('http') ? vcard.telegram : `https://t.me/${vcard.telegram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-200"
+                        title="Telegram"
+                      >
+                        <Send className="h-4 w-4 text-white" />
+                      </a>
                     )}
                     
                     {vcard.whatsapp && (
-                      <div className="group p-3 rounded-xl bg-gray-50 hover:bg-green-50 transition-all duration-200 border border-transparent hover:border-green-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-green-600 transition-colors">
-                            <MessageCircle className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <a 
-                              href={vcard.whatsapp.startsWith('http') ? vcard.whatsapp : `https://wa.me/${vcard.whatsapp.replace('+', '').replace(/\s/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-900 font-medium hover:text-green-600 transition-colors text-sm block"
-                            >
-                              {vcard.whatsapp}
-                            </a>
-                            <p className="text-xs text-gray-500">WhatsApp</p>
-                          </div>
-                        </div>
-                      </div>
+                      <a 
+                        href={vcard.whatsapp.startsWith('http') ? vcard.whatsapp : `https://wa.me/${vcard.whatsapp.replace('+', '').replace(/\s/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 transition-all duration-200"
+                        title="WhatsApp"
+                      >
+                        <MessageCircle className="h-4 w-4 text-white" />
+                      </a>
                     )}
                   </div>
                 </div>
